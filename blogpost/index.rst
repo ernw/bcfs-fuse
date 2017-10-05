@@ -4,12 +4,14 @@ Blue Coat File System
 You may remember our `last post <https://insinuator.net/2016/12/research-diary-blue-coat/>`_
 regarding the SGOS system and the proprietary file system. Since then, we got access to a newer
 version of the system (6.6.4.2). Still not the most current one (which seems to be 6.7.1.1) nor 
-of the 6.6.x branch (which seems to be 6.6.5.1).
+of the 6.6.x branch (which seems to be 6.6.5.1) though. As this system version also used the same 
+proprietary filesystem (although it initially booted from a FAT32 partition), I decided to take 
+a deeper look into this.
 
-By comparing the different images and with the information of previous researchers [1]_ I was
-able to reconstruct (a part of) the filesystem.
+By comparing the different images and with the information of previous researchers [1]_ I was 
+able to reconstruct (a part of) the filesystem and develop a fuse based driver.
 
-Is already described in the last post, the filesystem primarily is built upon multiple headers
+As already described in the last post, the filesystem primarily is built upon multiple headers
 with two magic fields:
 
 .. code-block:: c
@@ -67,9 +69,9 @@ The current magic values I identified during the analysis are:
       - EEDP
       - PartitionTableEntry
 
-For a complete list of the specific items, please take a look at `TODO <https://github.com/ernw/...>`_.
+For a complete list of the specific items, please take a look at `the bcfs.c file<https://github.com/ernw/bcfs-fuse/blob/master/bcfs.c>`_.
 
-Whilst the old version of the firmware is using this filesystem over the complete disk,
+Whilst the old version of the firmware is using this filesystem over the complete disk, 
 the new version consists of a FAT32 filesystem with the following file structure:
 
 .. raw:: html
@@ -88,7 +90,7 @@ the new version consists of a FAT32 filesystem with the following file structure
 The files ``starter.si`` and ``system1`` are actual images containing the proprietary filesystem,
 starting with a ``Partition``-Header.
 
-This is a how this header looks like (first as normal hexdump, then decoded in radare2):
+This is how this header looks like (first as normal hexdump, then decoded in radare2):
 
 .. code-block:: hexdump
 
@@ -305,5 +307,11 @@ driver is currently read only. Nevertheless, the 5.x version of the firmware doe
 But based on the work of Rigo and my research, a HMAC is still used to secure the integrity. As
 long as the key for the HMAC is not available (which was not by simply analysing the data structures)
 the stored data couldn't be modified.
+
+The source code of the (readonly) fuse driver is published together with this blogpost at github.
+
+Best,
+
+Timo
 
 .. [1] https://www.blackhat.com/docs/eu-15/materials/eu-15-Rigo-A-Peek-Under-The-Blue-Coat.pdf
